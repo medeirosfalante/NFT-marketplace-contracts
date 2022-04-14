@@ -1,0 +1,17 @@
+{
+    "name": "enablersdao",
+    "version": "1.0.0",
+    "description": "enablersdao NFTMarketPlace",
+    "main": "index.js",
+    "repository": "",
+    "author": "Rafael Medeiros <rafaelgurudesign@gmail.com>",
+    "license": "MIT",
+    "dependencies": {
+      "@openzeppelin/contracts": "^4.1.0",
+      "@truffle/hdwallet-provider": "^1.2.6",
+      "dotenv": "^8.2.0"
+    },
+    "devDependencies": {
+      "@nomiclabs/buidler": "^1.4.8"
+    }
+  }
