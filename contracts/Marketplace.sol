@@ -50,8 +50,8 @@ contract Marketplace is IMarketplace {
 
     // =====================================================================
 
-    constructor(address payable newBeneficiary) {
-        beneficiary = newBeneficiary;
+    constructor() {
+        beneficiary = payable(msg.sender);
         admin = msg.sender;
     }
 

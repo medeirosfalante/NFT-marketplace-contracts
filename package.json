@@ -4,14 +4,22 @@
     "description": "enablersdao NFTMarketPlace",
     "main": "index.js",
     "repository": "",
+    "scripts": {
+        "test": "truffle test ./test/*",
+        "start-blank": "rm -rf client/src && cp -rf barebones/src client/",
+        "client": "cd client && npm run start",
+        "console": "truffle console --network local",
+        "migrate:local": "truffle migrate --reset --network local",
+        "migrate:ropsten": "truffle migrate --reset --network ropsten"
+      },
     "author": "Rafael Medeiros <rafaelgurudesign@gmail.com>",
     "license": "MIT",
     "dependencies": {
-      "@openzeppelin/contracts": "^4.1.0",
-      "@truffle/hdwallet-provider": "^1.2.6",
-      "dotenv": "^8.2.0"
+        "@openzeppelin/contracts": "4.4.2",
+        "@truffle/hdwallet-provider": "^1.2.6",
+        "dotenv": "^8.2.0"
     },
     "devDependencies": {
-      "@nomiclabs/buidler": "^1.4.8"
+        "@nomiclabs/buidler": "^1.4.8"
     }
-  }
+}
