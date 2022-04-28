@@ -1,74 +1,72 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
-
-import "./INFTContract.sol";
-
 interface IMarketplace {
 
-    event CreateAsk(
-        address indexed nft,
-        uint256 indexed tokenID,
-        uint256 price,
-        address indexed to
-    );
-    event CancelAsk(address indexed nft, uint256 indexed tokenID);
-    event AcceptAsk(
-        address indexed nft,
-        uint256 indexed tokenID,
-        uint256 price,
-        address indexed to
-    );
-
-    event CreateBid(
-        address indexed nft,
-        uint256 indexed tokenID,
-        uint256 price
-    );
-    event CancelBid(address indexed nft, uint256 indexed tokenID);
-    event AcceptBid(
-        address indexed nft,
-        uint256 indexed tokenID,
-        uint256 price
-    );
-
-    struct Ask {
-        bool exists;
+    struct Order {
+        // Order ID
+        bytes32 id;
+        // Owner of the NFT
         address seller;
+        // NFT registry address
+        address nftAddress;
+        // Price (in wei) for the published item
         uint256 price;
-        address to;
+        // Time when this sale ends
+        uint256 expiresAt;
     }
 
     struct Bid {
-        bool exists;
-        address buyer;
+        // Bid Id
+        bytes32 id;
+        // Bidder address
+        address bidder;
+        // Price for the bid in wei
         uint256 price;
+        // Time when this bid ends
+        uint256 expiresAt;
     }
 
-    function createAsk(
-        INFTContract[] calldata nft,
-        uint256[] calldata tokenID,
-        uint256[] calldata price,
-        address[] calldata to
-    ) external;
+    // ORDER EVENTS
+    event OrderCreated(
+        bytes32 id,
+        address indexed seller,
+        address indexed nftAddress,
+        uint256 indexed assetId,
+        uint256 priceInWei,
+        uint256 expiresAt
+    );
 
-    function createBid(
-        INFTContract[] calldata nft,
-        uint256[] calldata tokenID,
-        uint256[] calldata price
-    ) external payable;
+    event OrderUpdated(
+        bytes32 id,
+        uint256 priceInWei,
+        uint256 expiresAt
+    );
 
-    function cancelAsk(INFTContract[] calldata nft, uint256[] calldata tokenID)
-        external;
+    event OrderSuccessful(
+        bytes32 id,
+        address indexed buyer,
+        uint256 priceInWei
+    );
 
-    function cancelBid(INFTContract[] calldata nft, uint256[] calldata tokenID)
-        external;
+    event OrderCancelled(bytes32 id);
 
-    function acceptAsk(INFTContract[] calldata nft, uint256[] calldata tokenID)
-        external
-        payable;
+    // BID EVENTS
+    event BidCreated(
+      bytes32 id,
+      address indexed nftAddress,
+      uint256 indexed assetId,
+      address indexed bidder,
+      uint256 priceInWei,
+      uint256 expiresAt
+    );
 
-    function acceptBid(INFTContract[] calldata nft, uint256[] calldata tokenID)
-        external;
-
-    function withdraw() external;
+    event BidAccepted(bytes32 id);
+    event BidCancelled(bytes32 id);
+    
+    event Buycreate(
+        address indexed nftAddress,
+        uint256 indexed assetId,
+        address indexed bidder,
+        address seller,
+        uint256 priceInWei);
 }
