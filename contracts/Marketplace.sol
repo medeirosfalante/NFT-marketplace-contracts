@@ -41,14 +41,9 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
 
     /**
      * @dev Initialize this contract. Acts as a constructor
-     * @param _acceptedToken - currency for payments
      */
-    constructor(address _acceptedToken) Ownable() {
-        require(
-            _acceptedToken.isContract(),
-            "The accepted token address must be a deployed contract"
-        );
-        acceptedToken = IERC20(_acceptedToken);
+    constructor() Ownable() {
+        
     }
 
     /**
