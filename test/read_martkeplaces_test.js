@@ -1,17 +1,17 @@
-const marketplace = artifacts.require("./Marketplace.sol");
+const marketplace = artifacts.require('./Marketplace.sol')
+const NFT = artifacts.require('NFT')
 
-contract("Marketplace", async (accounts) => {
-  it("list asks", async () => {
-    
-
-    const marketplaceRef = await marketplace.deployed();
-
-    const  asks = await marketplaceRef.asks.call(accounts[0],[0][0])
-
-    console.log("asks",asks)
-
-    assert.isAbove(asks.length, 1, 'more that 0');
-
-    
-  });
-});
+contract('Marketplace', async (accounts) => {
+  let nftRef
+  const seller = accounts[0]
+  const buyer1 = accounts[1]
+  const buyer2 = accounts[2]
+  const tokenId = 1234
+  const tokenId2 = 3456
+  it('create nft', async () => {
+    nftRef = await NFT.deployed()
+    await nftRef.mint(seller, 'https://game.example/item-id-8u5h2m.json')
+    const balance = await nftRef.balanceOf.call(seller);
+    assert.equal(balance.valueOf(), 1);
+  })
+})
