@@ -24,6 +24,48 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
     using Address for address;
     using SafeMath for uint256;
 
+    string public constant UNAUTHORIZED_SENDER =
+        "Marketplace: unauthorized sender";
+
+    string public constant ASSET_NOT_PUBLISHED =
+        "Marketplace: asset not published";
+
+    string public constant SENDER_NOT_ALLOWED =
+        "Marketplace: sender not allowed";
+    string public constant ORDER_EXPIRED = "Marketplace: order expired";
+
+    string public constant PRICE_SHOULD_BE_BIGGER_THAN =
+        "Marketplace: Price should be bigger than 0";
+    string public constant EXPIRE_TIME_SHOULD_BE_MORE_THAN =
+        "Marketplace: Expire time should be more than 1 minute in the future";
+
+    string public constant EXPIRE_TIME_SHOULD_BE_MORE_THAN =
+        "Marketplace: Expire time should be more than 1 minute in the future";
+
+    string public constant INVALID_PRICE = "Marketplace: invalid price";
+
+    string public constant PRICE_IS_NOT_RIGHT =
+        "Marketplace : price is not right";
+
+    string public constant BID_SHOULD_BE_ZERO =
+        "Marketplace: bid should be > 0";
+
+    string public constant ONLY_THE_ASSET_OWNER_CAN_CREATE_ORDERS =
+        "Marketplace: Only the asset owner can create orders";
+
+    string
+        public constant PUBLICATION_SHOULD_BE_MORE_THAT_ONE_MINUTE_IN_THE_FUTURE =
+        "Marketplace: Publication should be more than 1 minute in the future";
+
+    string public constant INVALID_BID_PRICE = "Marketplace: invalid bid price";
+    string public constant BID_EXPIRED = "Marketplace: the bid expired";
+
+    string public constant BID_PRICE_SHOULD_BE_HIGHER_THAT_LAST_BID =
+        "Marketplace: bid price should be higher than last bid";
+
+    string public constant BID_PRICE_SHOULD_BE_HIGHER_THAT_LAST_BID =
+        "The NFT Address should be a contract";
+
     IERC20 public acceptedToken;
 
     // From ERC721 registry assetId to Order (to avoid asset collision)
@@ -42,9 +84,7 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
     /**
      * @dev Initialize this contract. Acts as a constructor
      */
-    constructor() Ownable() {
-        
-    }
+    constructor() Ownable() {}
 
     /**
      * @dev Sets the paused failsafe. Can only be called by owner
@@ -84,7 +124,7 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
 
         require(
             order.seller == msg.sender || msg.sender == owner(),
-            "Marketplace: unauthorized sender"
+            UNAUTHORIZED_SENDER
         );
 
         // Remove pending bid if any
@@ -113,18 +153,15 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
         Order memory order = orderByAssetId[_nftAddress][_assetId];
 
         // Check valid order to update
-        require(order.id != 0, "Marketplace: asset not published");
-        require(order.seller == msg.sender, "Marketplace: sender not allowed");
-        require(
-            order.expiresAt >= block.timestamp,
-            "Marketplace: order expired"
-        );
+        require(order.id != 0, ASSET_NOT_PUBLISHED);
+        require(order.seller == msg.sender, SENDER_NOT_ALLOWED);
+        require(order.expiresAt >= block.timestamp, ORDER_EXPIRED);
 
         // check order updated params
-        require(_priceInWei > 0, "Marketplace: Price should be bigger than 0");
+        require(_priceInWei > 0, PRICE_SHOULD_BE_BIGGER_THAN);
         require(
             _expiresAt > block.timestamp.add(1 minutes),
-            "Marketplace: Expire time should be more than 1 minute in the future"
+            EXPIRE_TIME_SHOULD_BE_MORE_THAN
         );
 
         order.price = _priceInWei;
@@ -148,8 +185,8 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
         Order memory order = _getValidOrder(_nftAddress, _assetId);
 
         /// Check the execution price matches the order price
-        require(order.price == _priceInWei, "Marketplace: invalid price");
-        require(order.seller != msg.sender, "Marketplace: unauthorized sender");
+        require(order.price == _priceInWei, INVALID_PRICE);
+        require(order.seller != msg.sender, UNAUTHORIZED_SENDER);
 
         // market fee to cut
         uint256 saleShareAmount = 0;
@@ -203,7 +240,7 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
         // Checks order validity
         Order memory order = _getValidOrder(_nftAddress, _assetId);
 
-        require(_priceInWei == order.price, "Marketplace : price is not right");
+        require(_priceInWei == order.price, PRICE_IS_NOT_RIGHT);
 
         // Check price if theres previous a bid
         Bid memory bid = bidByOrderId[_nftAddress][_assetId];
@@ -212,7 +249,7 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
         if (bid.id != 0) {
             _cancelBid(bid.id, _nftAddress, _assetId, bid.bidder, bid.price);
         } else {
-            require(_priceInWei > 0, "Marketplace: bid should be > 0");
+            require(_priceInWei > 0, BID_SHOULD_BE_ZERO);
         }
 
         // Transfer sale amount from bidder to escrow
@@ -290,7 +327,7 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
 
         require(
             bid.bidder == msg.sender || msg.sender == owner(),
-            "Marketplace: Unauthorized sender"
+            UNAUTHORIZED_SENDER
         );
 
         _cancelBid(bid.id, _nftAddress, _assetId, bid.bidder, bid.price);
@@ -311,15 +348,12 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
         Order memory order = _getValidOrder(_nftAddress, _assetId);
 
         // item seller is the only allowed to accept a bid
-        require(order.seller == msg.sender, "Marketplace: unauthorized sender");
+        require(order.seller == msg.sender, UNAUTHORIZED_SENDER);
 
         Bid memory bid = bidByOrderId[_nftAddress][_assetId];
 
-        require(bid.price == _priceInWei, "Marketplace: invalid bid price");
-        require(
-            bid.expiresAt >= block.timestamp,
-            "Marketplace: the bid expired"
-        );
+        require(bid.price == _priceInWei, INVALID_BID_PRICE);
+        require(bid.expiresAt >= block.timestamp, BID_EXPIRED);
 
         // remove bid
         delete bidByOrderId[_nftAddress][_assetId];
@@ -366,11 +400,8 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
     {
         order = orderByAssetId[_nftAddress][_assetId];
 
-        require(order.id != 0, "Marketplace: asset not published");
-        require(
-            order.expiresAt >= block.timestamp,
-            "Marketplace: order expired"
-        );
+        require(order.id != 0, ASSET_NOT_PUBLISHED);
+        require(order.expiresAt >= block.timestamp, ORDER_EXPIRED);
     }
 
     /**
@@ -420,14 +451,14 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
 
         require(
             assetOwner == msg.sender,
-            "Marketplace: Only the asset owner can create orders"
+            ONLY_THE_ASSET_OWNER_CAN_CREATE_ORDERS
         );
 
-        require(_priceInWei > 0, "Marketplace: Price should be bigger than 0");
+        require(_priceInWei > 0, PRICE_SHOULD_BE_BIGGER_THAN);
 
         require(
             _expiresAt > block.timestamp.add(1 minutes),
-            "Marketplace: Publication should be more than 1 minute in the future"
+            PUBLICATION_SHOULD_BE_MORE_THAT_ONE_MINUTE_IN_THE_FUTURE
         );
 
         // get NFT asset from seller
@@ -493,15 +524,15 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
             if (bid.expiresAt >= block.timestamp) {
                 require(
                     _priceInWei > bid.price,
-                    "Marketplace: bid price should be higher than last bid"
+                    BID_PRICE_SHOULD_BE_HIGHER_THAT_LAST_BID
                 );
             } else {
-                require(_priceInWei > 0, "Marketplace: bid should be > 0");
+                require(_priceInWei > 0, BID_SHOULD_BE_ZERO);
             }
 
             _cancelBid(bid.id, _nftAddress, _assetId, bid.bidder, bid.price);
         } else {
-            require(_priceInWei > 0, "Marketplace: bid should be > 0");
+            require(_priceInWei > 0, BID_SHOULD_BE_ZERO);
         }
 
         // Transfer sale amount from bidder to escrow
