@@ -39,9 +39,6 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
     string public constant EXPIRE_TIME_SHOULD_BE_MORE_THAN =
         "Marketplace: Expire time should be more than 1 minute in the future";
 
-    string public constant EXPIRE_TIME_SHOULD_BE_MORE_THAN =
-        "Marketplace: Expire time should be more than 1 minute in the future";
-
     string public constant INVALID_PRICE = "Marketplace: invalid price";
 
     string public constant PRICE_IS_NOT_RIGHT =
@@ -63,7 +60,7 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
     string public constant BID_PRICE_SHOULD_BE_HIGHER_THAT_LAST_BID =
         "Marketplace: bid price should be higher than last bid";
 
-    string public constant BID_PRICE_SHOULD_BE_HIGHER_THAT_LAST_BID =
+    string public constant ADDRESS_SHOULD_BE_A_CONTRACT =
         "The NFT Address should be a contract";
 
     IERC20 public acceptedToken;
@@ -624,7 +621,7 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
     {
         require(
             _nftAddress.isContract(),
-            "The NFT Address should be a contract"
+            ADDRESS_SHOULD_BE_A_CONTRACT
         );
         // require(
         //     IERC721(_nftAddress).supportsInterface(_INTERFACE_ID_ERC721),

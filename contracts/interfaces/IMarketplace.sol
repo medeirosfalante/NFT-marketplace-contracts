@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
-interface IMarketplace {
 
+interface IMarketplace {
     struct Order {
         // Order ID
         bytes32 id;
@@ -36,11 +36,7 @@ interface IMarketplace {
         uint256 expiresAt
     );
 
-    event OrderUpdated(
-        bytes32 id,
-        uint256 priceInWei,
-        uint256 expiresAt
-    );
+    event OrderUpdated(bytes32 id, uint256 priceInWei, uint256 expiresAt);
 
     event OrderSuccessful(
         bytes32 id,
@@ -52,21 +48,29 @@ interface IMarketplace {
 
     // BID EVENTS
     event BidCreated(
-      bytes32 id,
-      address indexed nftAddress,
-      uint256 indexed assetId,
-      address indexed bidder,
-      uint256 priceInWei,
-      uint256 expiresAt
+        bytes32 id,
+        address indexed nftAddress,
+        uint256 indexed assetId,
+        address indexed bidder,
+        uint256 priceInWei,
+        uint256 expiresAt
     );
 
     event BidAccepted(bytes32 id);
     event BidCancelled(bytes32 id);
-    
+
     event Buycreate(
         address indexed nftAddress,
         uint256 indexed assetId,
         address indexed bidder,
         address seller,
-        uint256 priceInWei);
+        uint256 priceInWei
+    );
+
+    function createOrder(
+        address _nftAddress,
+        uint256 _assetId,
+        uint256 _priceInWei,
+        uint256 _expiresAt
+    ) external;
 }
