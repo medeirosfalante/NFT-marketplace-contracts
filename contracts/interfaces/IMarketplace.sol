@@ -13,6 +13,7 @@ interface IMarketplace {
         uint256 price;
         // Time when this sale ends
         uint256 expiresAt;
+        uint256 _assetId;
     }
 
     struct Bid {
