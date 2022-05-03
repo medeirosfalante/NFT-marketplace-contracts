@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
 import "./interfaces/IMarketplace.sol";
 
@@ -23,6 +24,9 @@ import "./FeeManager.sol";
 contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
     using Address for address;
     using SafeMath for uint256;
+    using Counters for Counters.Counter;
+    Counters.Counter private _itemIds;
+    Counters.Counter private _itemsSold;
 
     string public constant UNAUTHORIZED_SENDER =
         "Marketplace: unauthorized sender";
@@ -70,6 +74,9 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
 
     // From ERC721 registry assetId to Bid (to avoid asset collision)
     mapping(address => mapping(uint256 => Bid)) public bidByOrderId;
+    mapping(address => IERC721) public nftRegistered;
+
+    mapping(uint256 => Order) private _orders;
 
     mapping(address => mapping(uint256 => Bid[])) public bidHistoryByOrderId;
     mapping(address => mapping(uint256 => address[]))
@@ -285,6 +292,8 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
 
         ownerHistoryByOrderId[_nftAddress][_assetId].push(msg.sender);
 
+        _itemsSold.increment();
+
         emit Buycreate(
             _nftAddress,
             _assetId,
@@ -443,6 +452,8 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
         // Check nft registry
         IERC721 nftRegistry = _requireERC721(_nftAddress);
 
+        nftRegistered[_nftAddress] = nftRegistry;
+
         // Check order creator is the asset owner
         address assetOwner = nftRegistry.ownerOf(_assetId);
 
@@ -478,7 +489,20 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
             seller: assetOwner,
             nftAddress: _nftAddress,
             price: _priceInWei,
-            expiresAt: _expiresAt
+            expiresAt: _expiresAt,
+            _assetId: _assetId
+        });
+
+        _itemIds.increment();
+        uint256 itemId = _itemIds.current();
+
+        _orders[itemId] = Order({
+            id: orderId,
+            seller: assetOwner,
+            nftAddress: _nftAddress,
+            price: _priceInWei,
+            expiresAt: _expiresAt,
+            _assetId: _assetId
         });
 
         emit OrderCreated(
@@ -619,10 +643,7 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
         view
         returns (IERC721)
     {
-        require(
-            _nftAddress.isContract(),
-            ADDRESS_SHOULD_BE_A_CONTRACT
-        );
+        require(_nftAddress.isContract(), ADDRESS_SHOULD_BE_A_CONTRACT);
         // require(
         //     IERC721(_nftAddress).supportsInterface(_INTERFACE_ID_ERC721),
         //     "The NFT contract has an invalid ERC721 implementation"
@@ -639,6 +660,21 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
         for (uint256 i = 0; i < _assetIds.length; i++) {
             orders[i] = orderByAssetId[_nftAddress][_assetIds[i]];
         }
+    }
+
+    function getOrders() public view returns (Order[] memory) {
+        uint256 itemCount = _itemIds.current();
+        uint256 unsoldItemCount = _itemIds.current() - _itemsSold.current();
+        uint256 currentIndex = 0;
+        Order[] memory items = new Order[](unsoldItemCount);
+        for (uint256 i = 0; i < itemCount; i++) {
+            uint256 currentId = i + 1;
+                Order memory currentItem = _orders[currentId];
+                items[currentIndex] = currentItem;
+                currentIndex += 1;
+        }
+
+        return items;
     }
 
     function getBidByAssetIds(address _nftAddress, uint256[] memory _assetIds)
