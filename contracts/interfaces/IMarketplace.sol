@@ -74,4 +74,6 @@ interface IMarketplace {
         uint256 _priceInWei,
         uint256 _expiresAt
     ) external;
+
+    function getOrders() external view returns (Order[] memory);
 }
