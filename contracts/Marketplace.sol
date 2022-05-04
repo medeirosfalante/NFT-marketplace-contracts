@@ -606,14 +606,14 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
         address _seller
     ) internal {
         delete orderByAssetId[_nftAddress][_assetId];
-            uint256 itemId = _itemIds.current();
-            for (uint256 i = 0; i < itemId; i++) {
+        uint256 itemId = _itemIds.current();
+        for (uint256 i = 0; i < itemId; i++) {
             if (_orders[i + 1].id == _orderId) {
-                 uint256 currentId = i + 1;
+                uint256 currentId = i + 1;
                 delete _orders[currentId];
             }
         }
-
+        _itemIds.decrement();
 
         IERC721(_nftAddress).transferFrom(address(this), _seller, _assetId);
 
