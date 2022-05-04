@@ -75,9 +75,8 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
     // From ERC721 registry assetId to Bid (to avoid asset collision)
     mapping(address => mapping(uint256 => Bid)) public bidByOrderId;
     mapping(address => IERC721) public nftRegistered;
-
+    mapping(address => Order[]) private _ordersByUsers;
     mapping(uint256 => Order) private _orders;
-
     mapping(address => mapping(uint256 => Bid[])) public bidHistoryByOrderId;
     mapping(address => mapping(uint256 => address[]))
         public ownerHistoryByOrderId;
@@ -608,7 +607,6 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
     ) internal {
         delete orderByAssetId[_nftAddress][_assetId];
 
-        /// send asset back to seller
         IERC721(_nftAddress).transferFrom(address(this), _seller, _assetId);
 
         emit OrderCancelled(_orderId);
@@ -669,12 +667,34 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
         Order[] memory items = new Order[](unsoldItemCount);
         for (uint256 i = 0; i < itemCount; i++) {
             uint256 currentId = i + 1;
-                Order memory currentItem = _orders[currentId];
-                items[currentIndex] = currentItem;
-                currentIndex += 1;
+            Order memory currentItem = _orders[currentId];
+            items[currentIndex] = currentItem;
+            currentIndex += 1;
         }
 
         return items;
+    }
+
+    function getMyOrders() public view returns (Order[] memory orders) {
+        uint256 totalItemCount = _itemIds.current();
+        uint256 totalItemCountlist = _itemIds.current();
+        uint256 itemCount = 0;
+        uint256 currentIndex = 0;
+
+        for (uint256 i = 0; i < totalItemCount; i++) {
+            if (_orders[i + 1].seller == msg.sender) {
+                itemCount += 1;
+            }
+        }
+
+        orders = new Order[](itemCount);
+        for (uint256 i = 0; i < totalItemCountlist; i++) {
+            if (_orders[i + 1].seller == msg.sender) {
+                uint256 currentId = 1;
+                Order storage currentItem = _orders[currentId];
+                itemCount += 1;
+            }
+        }
     }
 
     function getBidByAssetIds(address _nftAddress, uint256[] memory _assetIds)
