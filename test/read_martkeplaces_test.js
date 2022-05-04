@@ -64,9 +64,15 @@ contract('Marketplace', async (accounts) => {
   })
 
   it('lists orders', async () => {
-    let marketplace = await Marketplace.deployed()
     const orders = await marketplace.getOrders.call()
     assert.equal(orders.length, 3)
   })
+
+  it('lists my orders', async () => {
+    let marketplace = await Marketplace.deployed()
+    const orders = await marketplace.getMyOrders.call({
+      from: seller2,
+    })
+    assert.equal(orders.length, 1)
   })
 })
