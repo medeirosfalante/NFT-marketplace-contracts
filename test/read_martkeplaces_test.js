@@ -5,12 +5,13 @@ const util = require('../utils/time')
 
 contract('Marketplace', async (accounts) => {
   let nftRef
+  let marketplace;
   const seller = accounts[0]
-  const buyer1 = accounts[1]
-  const buyer2 = accounts[2]
+  const seller2 = accounts[1]
   const tokenId1 = 0
   const tokenId2 = 1
-  it('create nft', async () => {
+  const tokenId3 = 2
+  it('create nft seller 1', async () => {
     nftRef = await NFT.deployed()
     await nftRef.mint(seller, 'https://game.example/item-id-8u5h2m.json', {
       from: seller,
@@ -22,11 +23,24 @@ contract('Marketplace', async (accounts) => {
     assert.equal(balance.valueOf(), 2)
   })
 
-  it('create marketplace order', async () => {
-    let marketplace = await Marketplace.deployed()
+  it('create nft seller 2', async () => {
     nftRef = await NFT.deployed()
-    await nftRef.approve(marketplace.address, tokenId1)
-    await nftRef.approve(marketplace.address, tokenId2)
+    await nftRef.mint(seller2, 'https://game.example/item-id-8u5h2m.json', {
+      from: seller2,
+    })
+    const balance = await nftRef.balanceOf.call(seller2)
+    assert.equal(balance.valueOf(), 1)
+  })
+
+  it('create marketplace order seller 1', async () => {
+    marketplace = await Marketplace.deployed()
+    nftRef = await NFT.deployed()
+    await nftRef.approve(marketplace.address, tokenId1, {
+      from: seller,
+    })
+    await nftRef.approve(marketplace.address, tokenId2, {
+      from: seller,
+    })
     var ts = util.addHours(10, new Date())
     const price = web3.utils.toWei('1', 'ether')
     await marketplace.createOrder(nftRef.address, tokenId1, price, ts, {
@@ -37,9 +51,28 @@ contract('Marketplace', async (accounts) => {
     })
   })
 
+  it('create marketplace order seller 2', async () => {
+    nftRef = await NFT.deployed()
+    await nftRef.approve(marketplace.address, tokenId3, {
+      from: seller2,
+    })
+    var ts = util.addHours(10, new Date())
+    const price = web3.utils.toWei('1', 'ether')
+    await marketplace.createOrder(nftRef.address, tokenId3, price, ts, {
+      from: seller2,
+    })
+  })
+
   it('lists orders', async () => {
-    let marketplace = await Marketplace.deployed()
     const orders = await marketplace.getOrders.call()
-    assert.equal(orders.length, 2)
+    assert.equal(orders.length, 3)
+  })
+
+  it('lists my orders', async () => {
+    let marketplace = await Marketplace.deployed()
+    const orders = await marketplace.getMyOrders.call({
+      from: seller2,
+    })
+    assert.equal(orders.length, 1)
   })
 })
