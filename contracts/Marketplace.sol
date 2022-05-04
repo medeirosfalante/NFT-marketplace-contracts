@@ -426,6 +426,7 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
     ) internal {
         // remove order
         delete orderByAssetId[_nftAddress][_assetId];
+        _removeOrderInlist(_orderId, _buyer);
 
         // Transfer NFT asset
         IERC721(_nftAddress).transferFrom(address(this), _buyer, _assetId);
@@ -606,15 +607,7 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
         address _seller
     ) internal {
         delete orderByAssetId[_nftAddress][_assetId];
-        uint256 itemId = _itemIds.current();
-        for (uint256 i = 0; i < itemId; i++) {
-            if (_orders[i + 1].id == _orderId) {
-                uint256 currentId = i + 1;
-                delete _orders[currentId];
-            }
-        }
-        _itemIds.decrement();
-
+        _removeOrderInlist(_orderId, _seller);
         IERC721(_nftAddress).transferFrom(address(this), _seller, _assetId);
 
         emit OrderCancelled(_orderId);
@@ -726,5 +719,16 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
         for (uint256 i = 0; i < _assetIds.length; i++) {
             bids[i] = bidHistoryByOrderId[_nftAddress][_assetIds[i]];
         }
+    }
+
+    function _removeOrderInlist(bytes32 _orderId, address _seller) internal {
+        uint256 itemId = _itemIds.current();
+        for (uint256 i = 0; i < itemId; i++) {
+            if (_orders[i + 1].id == _orderId) {
+                uint256 currentId = i + 1;
+                delete _orders[currentId];
+            }
+        }
+        _itemIds.decrement();
     }
 }
