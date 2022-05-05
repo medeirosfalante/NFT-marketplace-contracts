@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
+import "./IERC20.sol";
+
 interface IMarketplace {
     struct Order {
         // Order ID
@@ -35,6 +37,10 @@ interface IMarketplace {
         uint256 indexed assetId,
         uint256 priceInWei,
         uint256 expiresAt
+    );
+
+     event TokenAdd(
+        IERC20 token
     );
 
     event OrderUpdated(bytes32 id, uint256 priceInWei, uint256 expiresAt);
@@ -76,4 +82,6 @@ interface IMarketplace {
     ) external;
 
     function getOrders() external view returns (Order[] memory);
+    function getMyOrders() external view returns (Order[] memory orders);
+    function listTokens() external view returns (IERC20[] memory tokens);
 }
