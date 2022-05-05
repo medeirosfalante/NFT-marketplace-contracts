@@ -1,11 +1,12 @@
 const Marketplace = artifacts.require('./Marketplace.sol')
 const NFT = artifacts.require('NFT')
+const Token = artifacts.require('Token')
 
 const util = require('../utils/time')
 
 contract('Marketplace', async (accounts) => {
   let nftRef
-  let marketplace;
+  let marketplace
   const seller = accounts[0]
   const seller2 = accounts[1]
   const tokenId1 = 0
@@ -74,5 +75,25 @@ contract('Marketplace', async (accounts) => {
       from: seller2,
     })
     assert.equal(orders.length, 1)
+  })
+
+  it('add token', async () => {
+    let BRz = await Token.deployed()
+    await marketplace.AddToken(BRz.address)
+    const tokens = await marketplace.listTokens.call({
+      from: seller2,
+    })
+    assert.equal(tokens.length, 1)
+  })
+
+  it('non owner add token', async () => {
+    let BRz = await Token.deployed()
+    try {
+      await marketplace.AddToken.call(BRz.address, {
+        from: seller2,
+      })
+    } catch (e) {
+      assert.isNotNull(e, 'there was no error')
+    }
   })
 })

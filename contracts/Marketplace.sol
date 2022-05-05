@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import "./interfaces/IMarketplace.sol";
 
@@ -21,12 +22,20 @@ import "./FeeManager.sol";
 // todo: think about how on transfer we can delete the ask of prev owner
 // might not be necessary if we bake in checks, and if checks fail: delete
 // todo: check out 0.8.9 custom types
-contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
+contract Marketplace is
+    Pausable,
+    FeeManager,
+    IMarketplace,
+    AccessControl
+{
     using Address for address;
     using SafeMath for uint256;
     using Counters for Counters.Counter;
     Counters.Counter private _itemIds;
     Counters.Counter private _itemsSold;
+    Counters.Counter private _totalTokens;
+
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     string public constant UNAUTHORIZED_SENDER =
         "Marketplace: unauthorized sender";
@@ -75,6 +84,7 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
     // From ERC721 registry assetId to Bid (to avoid asset collision)
     mapping(address => mapping(uint256 => Bid)) public bidByOrderId;
     mapping(address => IERC721) public nftRegistered;
+    mapping(uint256 => IERC20) public tokensSupport;
     mapping(address => Order[]) private _ordersByUsers;
     mapping(uint256 => Order) private _orders;
     mapping(address => mapping(uint256 => Bid[])) public bidHistoryByOrderId;
@@ -87,13 +97,15 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
     /**
      * @dev Initialize this contract. Acts as a constructor
      */
-    constructor() Ownable() {}
+    constructor() Ownable() {
+        _setupRole(MANAGER_ROLE, msg.sender);
+    }
 
     /**
      * @dev Sets the paused failsafe. Can only be called by owner
      * @param _setPaused - paused state
      */
-    function setPaused(bool _setPaused) public onlyOwner {
+    function setPaused(bool _setPaused) public onlyRole(MANAGER_ROLE) {
         return (_setPaused) ? _pause() : _unpause();
     }
 
@@ -426,7 +438,7 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
     ) internal {
         // remove order
         delete orderByAssetId[_nftAddress][_assetId];
-        _removeOrderInlist(_orderId, _buyer);
+        _removeOrderInlist(_orderId);
 
         // Transfer NFT asset
         IERC721(_nftAddress).transferFrom(address(this), _buyer, _assetId);
@@ -434,6 +446,19 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
 
         // Notify ..
         emit OrderSuccessful(_orderId, _buyer, _priceInWei);
+    }
+
+    /**
+     * @dev Creates a new order
+     * @param tokenAddress - fungible registry address
+     */
+    function AddToken(address tokenAddress) public onlyRole(MANAGER_ROLE) {
+        IERC20 newToken = IERC20(tokenAddress);
+        _totalTokens.increment();
+        uint256 itemId = _totalTokens.current();
+        tokensSupport[itemId] = newToken;
+
+        emit TokenAdd(newToken);
     }
 
     /**
@@ -607,7 +632,7 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
         address _seller
     ) internal {
         delete orderByAssetId[_nftAddress][_assetId];
-        _removeOrderInlist(_orderId, _seller);
+        _removeOrderInlist(_orderId);
         IERC721(_nftAddress).transferFrom(address(this), _seller, _assetId);
 
         emit OrderCancelled(_orderId);
@@ -676,6 +701,20 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
         return items;
     }
 
+    function listTokens() public view returns (IERC20[] memory tokens) {
+        uint256 totalItemCount = _totalTokens.current();
+        uint256 currentIndex = 0;
+        uint256 itemCount = 0;
+        tokens = new IERC20[](totalItemCount);
+        for (uint256 i = 0; i < totalItemCount; i++) {
+            uint256 currentId = 1;
+            IERC20 currentItem = tokensSupport[currentId];
+            itemCount += 1;
+            tokens[currentIndex] = currentItem;
+            currentIndex += 1;
+        }
+    }
+
     function getMyOrders() public view returns (Order[] memory orders) {
         uint256 totalItemCount = _itemIds.current();
         uint256 totalItemCountlist = _itemIds.current();
@@ -721,7 +760,13 @@ contract Marketplace is Ownable, Pausable, FeeManager, IMarketplace {
         }
     }
 
-    function _removeOrderInlist(bytes32 _orderId, address _seller) internal {
+    /**
+     * @dev Remove item list user
+     *  can only remove item in user list
+     * @param _orderId - Bid identifier
+     */
+
+    function _removeOrderInlist(bytes32 _orderId) internal {
         uint256 itemId = _itemIds.current();
         for (uint256 i = 0; i < itemId; i++) {
             if (_orders[i + 1].id == _orderId) {
