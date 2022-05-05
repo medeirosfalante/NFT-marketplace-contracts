@@ -461,6 +461,18 @@ contract Marketplace is
         emit TokenAdd(newToken);
     }
 
+    function removeToken(address tokenAddress)  public onlyRole(MANAGER_ROLE) {
+        uint256 itemId = _totalTokens.current();
+        for (uint256 i = 0; i < itemId; i++) {
+            if (address(tokensSupport[i + 1]) == tokenAddress) {
+                uint256 currentId = i + 1;
+                delete tokensSupport[currentId];
+            }
+        }
+        _totalTokens.decrement();
+    }
+
+
     /**
      * @dev Creates a new order
      * @param _nftAddress - Non fungible registry address

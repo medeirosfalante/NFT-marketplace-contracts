@@ -96,4 +96,13 @@ contract('Marketplace', async (accounts) => {
       assert.isNotNull(e, 'there was no error')
     }
   })
+
+  it('remove token', async () => {
+    let BRz = await Token.deployed()
+    await marketplace.removeToken(BRz.address)
+    const tokens = await marketplace.listTokens.call({
+      from: seller2,
+    })
+    assert.equal(tokens.length, 0)
+  })
 })
