@@ -16,18 +16,14 @@ import "./interfaces/IMarketplace.sol";
 
 import "./interfaces/IERC721.sol";
 import "./interfaces/IERC20.sol";
+import "./interfaces/IERC20Metadata.sol";
 
 import "./FeeManager.sol";
 
 // todo: think about how on transfer we can delete the ask of prev owner
 // might not be necessary if we bake in checks, and if checks fail: delete
 // todo: check out 0.8.9 custom types
-contract Marketplace is
-    Pausable,
-    FeeManager,
-    IMarketplace,
-    AccessControl
-{
+contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
     using Address for address;
     using SafeMath for uint256;
     using Counters for Counters.Counter;
@@ -75,6 +71,8 @@ contract Marketplace is
 
     string public constant ADDRESS_SHOULD_BE_A_CONTRACT =
         "The NFT Address should be a contract";
+         string public constant TOKEN_IS_IVALID =
+        "StableCoin: token not support in marketplace call listTokens() and check tokens supported";
 
     IERC20 public acceptedToken;
 
@@ -84,7 +82,7 @@ contract Marketplace is
     // From ERC721 registry assetId to Bid (to avoid asset collision)
     mapping(address => mapping(uint256 => Bid)) public bidByOrderId;
     mapping(address => IERC721) public nftRegistered;
-    mapping(uint256 => IERC20) public tokensSupport;
+    mapping(uint256 => Token) public tokensSupport;
     mapping(address => Order[]) private _ordersByUsers;
     mapping(uint256 => Order) private _orders;
     mapping(address => mapping(uint256 => Bid[])) public bidHistoryByOrderId;
@@ -120,9 +118,16 @@ contract Marketplace is
         address _nftAddress,
         uint256 _assetId,
         uint256 _priceInWei,
-        uint256 _expiresAt
+        uint256 _expiresAt,
+        address _tokenContract
     ) public whenNotPaused {
-        _createOrder(_nftAddress, _assetId, _priceInWei, _expiresAt);
+        _createOrder(
+            _nftAddress,
+            _assetId,
+            _priceInWei,
+            _expiresAt,
+            _tokenContract
+        );
     }
 
     /**
@@ -453,25 +458,28 @@ contract Marketplace is
      * @param tokenAddress - fungible registry address
      */
     function AddToken(address tokenAddress) public onlyRole(MANAGER_ROLE) {
-        IERC20 newToken = IERC20(tokenAddress);
+        IERC20Metadata newToken = IERC20Metadata(tokenAddress);
         _totalTokens.increment();
         uint256 itemId = _totalTokens.current();
-        tokensSupport[itemId] = newToken;
+        tokensSupport[itemId] = Token({
+            symbolName: newToken.symbol(),
+            decimal: newToken.decimals(),
+            tokenContract: tokenAddress
+        });
 
         emit TokenAdd(newToken);
     }
 
-    function removeToken(address tokenAddress)  public onlyRole(MANAGER_ROLE) {
+    function removeToken(address tokenAddress) public onlyRole(MANAGER_ROLE) {
         uint256 itemId = _totalTokens.current();
         for (uint256 i = 0; i < itemId; i++) {
-            if (address(tokensSupport[i + 1]) == tokenAddress) {
+            if (tokensSupport[i + 1].tokenContract == tokenAddress) {
                 uint256 currentId = i + 1;
                 delete tokensSupport[currentId];
             }
         }
         _totalTokens.decrement();
     }
-
 
     /**
      * @dev Creates a new order
@@ -484,10 +492,18 @@ contract Marketplace is
         address _nftAddress,
         uint256 _assetId,
         uint256 _priceInWei,
-        uint256 _expiresAt
+        uint256 _expiresAt,
+        address __tokenContract
     ) internal {
         // Check nft registry
         IERC721 nftRegistry = _requireERC721(_nftAddress);
+
+        IERC20Metadata token = IERC20Metadata(__tokenContract);
+         require(
+            getSymbolIndex(token.symbol()) > 0,
+            TOKEN_IS_IVALID
+        );
+
 
         nftRegistered[_nftAddress] = nftRegistry;
 
@@ -527,7 +543,8 @@ contract Marketplace is
             nftAddress: _nftAddress,
             price: _priceInWei,
             expiresAt: _expiresAt,
-            _assetId: _assetId
+            _assetId: _assetId,
+            tokenContract: __tokenContract
         });
 
         _itemIds.increment();
@@ -539,7 +556,8 @@ contract Marketplace is
             nftAddress: _nftAddress,
             price: _priceInWei,
             expiresAt: _expiresAt,
-            _assetId: _assetId
+            _assetId: _assetId,
+            tokenContract: __tokenContract
         });
 
         emit OrderCreated(
@@ -548,7 +566,8 @@ contract Marketplace is
             _nftAddress,
             _assetId,
             _priceInWei,
-            _expiresAt
+            _expiresAt,
+            __tokenContract
         );
     }
 
@@ -713,14 +732,14 @@ contract Marketplace is
         return items;
     }
 
-    function listTokens() public view returns (IERC20[] memory tokens) {
+    function listTokens() public view returns (Token[] memory tokens) {
         uint256 totalItemCount = _totalTokens.current();
         uint256 currentIndex = 0;
         uint256 itemCount = 0;
-        tokens = new IERC20[](totalItemCount);
+        tokens = new Token[](totalItemCount);
         for (uint256 i = 0; i < totalItemCount; i++) {
             uint256 currentId = 1;
-            IERC20 currentItem = tokensSupport[currentId];
+            Token storage currentItem = tokensSupport[currentId];
             itemCount += 1;
             tokens[currentIndex] = currentItem;
             currentIndex += 1;
@@ -787,5 +806,32 @@ contract Marketplace is
             }
         }
         _itemIds.decrement();
+    }
+
+    function getSymbolIndex(string memory symbolName)
+        internal
+        view
+        returns (uint256)
+    {
+        for (uint256 i = 1; i <= _totalTokens.current(); i++) {
+            if (stringsEqual(tokensSupport[i].symbolName, symbolName)) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    function stringsEqual(string storage _a, string memory _b)
+        internal
+        pure
+        returns (bool)
+    {
+        bytes storage a = bytes(_a);
+        bytes memory b = bytes(_b);
+
+        if (keccak256(a) != keccak256(b)) {
+            return false;
+        }
+        return true;
     }
 }

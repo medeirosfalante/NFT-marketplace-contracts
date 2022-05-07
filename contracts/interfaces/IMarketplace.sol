@@ -16,6 +16,7 @@ interface IMarketplace {
         // Time when this sale ends
         uint256 expiresAt;
         uint256 _assetId;
+        address tokenContract;
     }
 
     struct Bid {
@@ -29,6 +30,12 @@ interface IMarketplace {
         uint256 expiresAt;
     }
 
+    struct Token {
+        string symbolName;
+        uint256 decimal;
+        address tokenContract;
+    }
+
     // ORDER EVENTS
     event OrderCreated(
         bytes32 id,
@@ -36,12 +43,11 @@ interface IMarketplace {
         address indexed nftAddress,
         uint256 indexed assetId,
         uint256 priceInWei,
-        uint256 expiresAt
+        uint256 expiresAt,
+        address tokenContract
     );
 
-     event TokenAdd(
-        IERC20 token
-    );
+    event TokenAdd(IERC20 token);
 
     event OrderUpdated(bytes32 id, uint256 priceInWei, uint256 expiresAt);
 
@@ -78,10 +84,13 @@ interface IMarketplace {
         address _nftAddress,
         uint256 _assetId,
         uint256 _priceInWei,
-        uint256 _expiresAt
+        uint256 _expiresAt,
+        address _tokenContract
     ) external;
 
     function getOrders() external view returns (Order[] memory);
+
     function getMyOrders() external view returns (Order[] memory orders);
-    function listTokens() external view returns (IERC20[] memory tokens);
+
+    function listTokens() external view returns (Token[] memory tokens);
 }
