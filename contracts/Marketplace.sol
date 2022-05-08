@@ -85,6 +85,9 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
     mapping(uint256 => Token) public tokensSupport;
     mapping(address => Order[]) private _ordersByUsers;
     mapping(uint256 => Order) private _orders;
+
+    mapping(uint256 => Collection) private _collections;
+
     mapping(address => mapping(uint256 => Bid[])) public bidHistoryByOrderId;
     mapping(address => mapping(uint256 => address[]))
         public ownerHistoryByOrderId;

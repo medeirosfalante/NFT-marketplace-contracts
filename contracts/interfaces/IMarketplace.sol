@@ -2,6 +2,7 @@
 pragma solidity 0.8.13;
 
 import "./IERC20.sol";
+import "./IERC721.sol";
 
 interface IMarketplace {
     struct Order {
@@ -17,6 +18,31 @@ interface IMarketplace {
         uint256 expiresAt;
         uint256 _assetId;
         address tokenContract;
+    }
+
+    struct CollectionItem {
+        // Order ID
+        bytes32 id;
+        // Owner of the NFT
+        address seller;
+        // NFT registry address
+        address nftAddress;
+        // Price (in wei) for the published item
+        uint256 price;
+        // Time when this sale ends
+        uint256 expiresAt;
+        uint256 _assetId;
+        address tokenContract;
+    }
+
+    struct Collection {
+        // Owner of the NFT
+        address creator;
+        // Collectio name
+        string name;
+        string icon;
+        // NFT registry address
+        mapping(uint256 => CollectionItem) items;
     }
 
     struct Bid {
