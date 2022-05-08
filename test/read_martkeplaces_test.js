@@ -9,6 +9,7 @@ contract('Marketplace', async (accounts) => {
   let marketplace
   const seller = accounts[0]
   const seller2 = accounts[1]
+  const buyer1 = accounts[2]
   const tokenId1 = 0
   const tokenId2 = 1
   const tokenId3 = 2
@@ -102,6 +103,7 @@ contract('Marketplace', async (accounts) => {
     )
   })
 
+
   it('lists orders', async () => {
     const orders = await marketplace.getOrders.call()
     assert.equal(orders.length, 3)
@@ -157,4 +159,45 @@ contract('Marketplace', async (accounts) => {
       assert.isNotNull(e, 'there was no error')
     }
   })
+
+  it('create marketplace order seller 1 without token supported', async () => {
+    nftRef = await NFT.deployed()
+    await nftRef.approve(marketplace.address, tokenId4, {
+      from: seller2,
+    })
+    var ts = util.addHours(10, new Date())
+    const price = web3.utils.toWei('1', 'ether')
+    try {
+      await marketplace.createOrder(
+        nftRef.address,
+        tokenId4,
+        price,
+        ts,
+        '0x420412e765bfa6d85aaac94b4f7b708c89be2e2b',
+        {
+          from: seller2,
+        },
+      )
+    } catch (e) {
+      assert.isNotNull(e, 'there was no error')
+    }
+  })
+
+
+  it('create buy  1', async () => {
+    let BRz = await Token.deployed()
+    const price = web3.utils.toWei('1', 'ether')
+    nftRef = await NFT.deployed()
+    await BRz.approve(marketplace.address, price, {
+      from: buyer1,
+    })
+
+    await marketplace.Buy(nftRef.address, tokenId3, price, {
+      from: buyer1,
+    })
+    const balance = await nftRef.balanceOf.call(buyer1)
+    assert.equal(balance.valueOf(), 1)
+  })
 })
+
+
