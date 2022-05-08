@@ -607,9 +607,9 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
         } else {
             require(_priceInWei > 0, BID_SHOULD_BE_ZERO);
         }
-
+        IERC20Metadata token = IERC20Metadata(order.tokenContract);
         // Transfer sale amount from bidder to escrow
-        acceptedToken.transferFrom(
+        token.transferFrom(
             msg.sender, // bidder
             address(this),
             _priceInWei

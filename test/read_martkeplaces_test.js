@@ -103,7 +103,6 @@ contract('Marketplace', async (accounts) => {
     )
   })
 
-
   it('lists orders', async () => {
     const orders = await marketplace.getOrders.call()
     assert.equal(orders.length, 3)
@@ -183,7 +182,6 @@ contract('Marketplace', async (accounts) => {
     }
   })
 
-
   it('create buy  1', async () => {
     let BRz = await Token.deployed()
     const price = web3.utils.toWei('1', 'ether')
@@ -198,6 +196,20 @@ contract('Marketplace', async (accounts) => {
     const balance = await nftRef.balanceOf.call(buyer1)
     assert.equal(balance.valueOf(), 1)
   })
+
+  it('create bid order', async () => {
+    let BRz = await Token.deployed()
+    const price = web3.utils.toWei('0.5', 'ether')
+    nftRef = await NFT.deployed()
+    await BRz.approve(marketplace.address, price, {
+      from: buyer1,
+    })
+    var ts = util.addHours(10, new Date())
+    await marketplace.PlaceBid(nftRef.address, tokenId2, price, ts, {
+      from: buyer1,
+    })
+    const lists = [tokenId2]
+    const bids = await marketplace.getBidByAssetIds.call(nftRef.address, lists)
+    assert.equal(bids.length, 1)
+  })
 })
-
-
