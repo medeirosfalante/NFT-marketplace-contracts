@@ -5,9 +5,14 @@ const Token = artifacts.require('Token')
 
 module.exports = async function (deployer, network, accounts) {
   await deployer.deploy(ArtMarketplace)
-  const market = await ArtMarketplace.deployed()
-  const instance = await deployer.deploy(NFT, 'Non Fungable Tokens', 'NFT')
-  const tokenIntance = await deployer.deploy(Token, 'BRZ', 100000000000, {
+  await ArtMarketplace.deployed()
+  const total = web3.utils.toWei('10000', 'ether')
+  const accountRef = web3.utils.toWei('100', 'ether')
+  await deployer.deploy(NFT, 'Non Fungable Tokens', 'NFT')
+  await deployer.deploy(Token, 'BRZ', total.toString(), {
     from: accounts[0],
   })
+  const tokenIntance = await Token.deployed()
+  tokenIntance.transfer(accounts[2],accountRef.toString())
+
 }

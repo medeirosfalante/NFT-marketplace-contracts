@@ -71,7 +71,7 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
 
     string public constant ADDRESS_SHOULD_BE_A_CONTRACT =
         "The NFT Address should be a contract";
-         string public constant TOKEN_IS_IVALID =
+    string public constant TOKEN_IS_IVALID =
         "StableCoin: token not support in marketplace call listTokens() and check tokens supported";
 
     IERC20 public acceptedToken;
@@ -272,8 +272,9 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
             require(_priceInWei > 0, BID_SHOULD_BE_ZERO);
         }
 
+        IERC20Metadata token = IERC20Metadata(order.tokenContract);
         // Transfer sale amount from bidder to escrow
-        acceptedToken.transferFrom(
+        token.transferFrom(
             msg.sender, // bidder
             address(this),
             _priceInWei
@@ -285,20 +286,19 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
         );
 
         // to owner
-        acceptedToken.transfer(owner(), saleShareAmount);
+        token.transfer(owner(), saleShareAmount);
 
         //royallty
         uint256 royalltyShareAmount = _priceInWei
             .mul(FeeManager.royaltyPerMillion)
-            .div(1e6);
-
-        acceptedToken.transfer(
-            IERC721(_nftAddress).createrOf(_assetId),
+            .div(1e18);
+        token.transfer(
+            IERC721(_nftAddress).ownerOf(_assetId),
             royalltyShareAmount
         );
 
         // transfer escrowed bid amount minus market fee to seller
-        acceptedToken.transfer(
+        token.transfer(
             order.seller,
             _priceInWei.sub(saleShareAmount).sub(royalltyShareAmount)
         );
@@ -499,11 +499,7 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
         IERC721 nftRegistry = _requireERC721(_nftAddress);
 
         IERC20Metadata token = IERC20Metadata(__tokenContract);
-         require(
-            getSymbolIndex(token.symbol()) > 0,
-            TOKEN_IS_IVALID
-        );
-
+        require(getSymbolIndex(token.symbol()) > 0, TOKEN_IS_IVALID);
 
         nftRegistered[_nftAddress] = nftRegistry;
 
@@ -611,9 +607,9 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
         } else {
             require(_priceInWei > 0, BID_SHOULD_BE_ZERO);
         }
-
+        IERC20Metadata token = IERC20Metadata(order.tokenContract);
         // Transfer sale amount from bidder to escrow
-        acceptedToken.transferFrom(
+        token.transferFrom(
             msg.sender, // bidder
             address(this),
             _priceInWei

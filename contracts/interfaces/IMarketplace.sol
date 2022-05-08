@@ -93,4 +93,10 @@ interface IMarketplace {
     function getMyOrders() external view returns (Order[] memory orders);
 
     function listTokens() external view returns (Token[] memory tokens);
+
+    function Buy(
+        address _nftAddress,
+        uint256 _assetId,
+        uint256 _priceInWei
+    ) external;
 }

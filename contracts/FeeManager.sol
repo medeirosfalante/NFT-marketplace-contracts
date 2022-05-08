@@ -1,18 +1,16 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract FeeManager is Ownable {
-
     event ChangedFeePerMillion(uint256 cutPerMillion);
 
     // Market fee on sales
-    uint256 public cutPerMillion=100000;
+    uint256 public cutPerMillion = 100000;
     uint256 public constant maxCutPerMillion = 100000; // 10% cut
-    
-    uint256 public royaltyPerMillion=100000;
+
+    uint256 public royaltyPerMillion = 100000;
 
     /**
      * @dev Sets the share cut for the owner of the contract that's
