@@ -30,6 +30,8 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
     Counters.Counter private _itemIds;
     Counters.Counter private _itemsSold;
     Counters.Counter private _totalTokens;
+    Counters.Counter private _totalCollection;
+    Counters.Counter private _totalCollectionItems;
 
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
@@ -74,8 +76,19 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
     string public constant TOKEN_IS_IVALID =
         "StableCoin: token not support in marketplace call listTokens() and check tokens supported";
 
+    string public constant OWNER_COLLECTION_INVALID =
+        "Collection: Only the collection owner can add nft";
+
+    string public constant NFT_ASSET_DONT_EXISTS =
+        "Collection: Only the assset owner can add nft";
     IERC20 public acceptedToken;
 
+    string public constant COLLECTION_DONT_EXISTS =
+        "Collection: you need create collection before add nft";
+    string public constant COLLECTION_NAME_EMPATY =
+        "Collection: Name cannot be empty";
+    string public constant COLLECTION_ICON_EMPATY =
+        "Collection: Icon cannot be empty";
     // From ERC721 registry assetId to Order (to avoid asset collision)
     mapping(address => mapping(uint256 => Order)) public orderByAssetId;
 
@@ -87,6 +100,7 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
     mapping(uint256 => Order) private _orders;
 
     mapping(uint256 => Collection) private _collections;
+    mapping(uint256 => mapping(uint256 => CollectionItem))private _collectionsItems;
 
     mapping(address => mapping(uint256 => Bid[])) public bidHistoryByOrderId;
     mapping(address => mapping(uint256 => address[]))
@@ -471,6 +485,47 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
         });
 
         emit TokenAdd(newToken);
+    }
+
+    function AddItemCollection(uint256 _id, uint256 orderID) public {
+        require(_collections[_id].id > 0, COLLECTION_DONT_EXISTS);
+
+        require(
+            _collections[_id].creator == msg.sender,
+            OWNER_COLLECTION_INVALID
+        );
+        require(_orders[_id].id > 0, UNAUTHORIZED_SENDER);
+        Order storage order = _orders[orderID];
+         _totalCollectionItems.increment();
+
+        _collectionsItems[_id][ _totalCollectionItems.current()] = CollectionItem({
+            id: order.id,
+            creator: order.seller,
+            nftAddress: order.nftAddress,
+            price: order.price,
+            expiresAt: order.expiresAt,
+            assetId: order._assetId,
+            tokenContract: order.tokenContract
+        });
+    }
+
+    function createCollection(string memory name, string memory icon)
+        public
+        returns (uint256)
+    {
+
+        bytes memory nameBytes = bytes(name);
+        bytes memory iconBytes = bytes(icon);
+        _totalCollection.increment();
+        require(nameBytes.length > 0, COLLECTION_NAME_EMPATY);
+        require(iconBytes.length > 0, COLLECTION_ICON_EMPATY);
+        _collections[_totalCollection.current()] = Collection({
+            id: _totalCollection.current(),
+            creator: msg.sender,
+            name: name,
+            icon: icon
+        });
+        return _totalCollection.current();
     }
 
     function removeToken(address tokenAddress) public onlyRole(MANAGER_ROLE) {

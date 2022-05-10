@@ -24,25 +24,25 @@ interface IMarketplace {
         // Order ID
         bytes32 id;
         // Owner of the NFT
-        address seller;
+        address creator;
         // NFT registry address
         address nftAddress;
         // Price (in wei) for the published item
         uint256 price;
         // Time when this sale ends
         uint256 expiresAt;
-        uint256 _assetId;
+        uint256 assetId;
         address tokenContract;
     }
 
     struct Collection {
+        uint256 id;
         // Owner of the NFT
         address creator;
         // Collectio name
         string name;
         string icon;
         // NFT registry address
-        mapping(uint256 => CollectionItem) items;
     }
 
     struct Bid {
@@ -114,12 +114,10 @@ interface IMarketplace {
         address _tokenContract
     ) external;
 
+    // function createCollection(string memory name, string memory icon) external;
     function getOrders() external view returns (Order[] memory);
-
     function getMyOrders() external view returns (Order[] memory orders);
-
     function listTokens() external view returns (Token[] memory tokens);
-
     function Buy(
         address _nftAddress,
         uint256 _assetId,
