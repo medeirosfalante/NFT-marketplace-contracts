@@ -4,6 +4,8 @@ pragma solidity 0.8.13;
 import "./IERC20.sol";
 import "./IERC721.sol";
 
+import "@openzeppelin/contracts/utils/Counters.sol";
+
 interface IMarketplace {
     struct Order {
         // Order ID
@@ -33,6 +35,7 @@ interface IMarketplace {
         uint256 expiresAt;
         uint256 assetId;
         address tokenContract;
+        uint256 collectionId;
     }
 
     struct Collection {
@@ -42,6 +45,7 @@ interface IMarketplace {
         // Collectio name
         string name;
         string icon;
+        Counters.Counter total;
         // NFT registry address
     }
 
@@ -116,11 +120,32 @@ interface IMarketplace {
 
     // function createCollection(string memory name, string memory icon) external;
     function getOrders() external view returns (Order[] memory);
+
     function getMyOrders() external view returns (Order[] memory orders);
+
     function listTokens() external view returns (Token[] memory tokens);
+
+    function listCollections()
+        external
+        view
+        returns (Collection[] memory collections);
+
     function Buy(
         address _nftAddress,
         uint256 _assetId,
         uint256 _priceInWei
     ) external;
+
+    function createCollection(string memory name, string memory icon)
+        external
+        returns (uint256);
+
+    function addItemCollection(uint256 _id, uint256 orderID)
+        external
+        returns (CollectionItem memory);
+
+    function listItemsCollection(uint256 _id)
+        external
+        view
+        returns (CollectionItem[] memory collections);
 }
