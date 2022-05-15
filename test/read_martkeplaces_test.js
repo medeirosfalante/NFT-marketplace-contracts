@@ -212,4 +212,29 @@ contract('Marketplace', async (accounts) => {
     const bids = await marketplace.getBidByAssetIds.call(nftRef.address, lists)
     assert.equal(bids.length, 1)
   })
+
+  it('create collection', async () => {
+    let BRz = await Token.deployed()
+    nftRef = await NFT.deployed()
+    await marketplace.createCollection('TEST', 'google.com', {
+      from: seller2,
+    })
+    const collections = await marketplace.listCollections.call({
+      from: seller2,
+    })
+    const id = await marketplace._totalCollection.call()
+    assert.equal(collections.length, 1)
+    assert.equal(parseInt(id.valueOf().toString()), 1)
+    const item = await marketplace.addItemCollection(
+      parseInt(id.valueOf().toString()),
+      0,
+      {
+        from: seller2,
+      },
+    )
+    const listItens = await marketplace.listItemsCollection.call(
+      parseInt(id.valueOf().toString()),
+    )
+    assert.equal(listItens.length, 1)
+  })
 })
