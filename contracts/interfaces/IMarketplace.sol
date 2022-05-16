@@ -20,6 +20,7 @@ interface IMarketplace {
         uint256 expiresAt;
         uint256 _assetId;
         address tokenContract;
+        uint256 category;
     }
 
     struct CollectionItem {
@@ -60,6 +61,13 @@ interface IMarketplace {
         uint256 expiresAt;
     }
 
+    struct Category {
+        // Bid Id
+        uint256 id;
+        string name;
+        string icon;
+    }
+
     struct Token {
         string symbolName;
         uint256 decimal;
@@ -74,7 +82,8 @@ interface IMarketplace {
         uint256 indexed assetId,
         uint256 priceInWei,
         uint256 expiresAt,
-        address tokenContract
+        address tokenContract,
+        uint256 category
     );
 
     event TokenAdd(IERC20 token);
@@ -115,11 +124,12 @@ interface IMarketplace {
         uint256 _assetId,
         uint256 _priceInWei,
         uint256 _expiresAt,
-        address _tokenContract
+        address _tokenContract,
+        uint256 _category
     ) external;
 
     // function createCollection(string memory name, string memory icon) external;
-    function getOrders() external view returns (Order[] memory);
+    function listOrders() external view returns (Order[] memory);
 
     function getMyOrders() external view returns (Order[] memory orders);
 
@@ -148,4 +158,18 @@ interface IMarketplace {
         external
         view
         returns (CollectionItem[] memory collections);
+
+    function createCategory(string memory name, string memory icon)
+        external
+        returns (uint256);
+
+    function listCategory()
+        external
+        view
+        returns (Category[] memory categories);
+
+    function listOrdersByCategory(uint256 _id)
+        external
+        view
+        returns (Order[] memory orders);
 }

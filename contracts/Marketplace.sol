@@ -85,11 +85,14 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
     string public constant COLLECTION_ICON_EMPATY =
         "Collection: Icon cannot be empty";
 
+    string public constant CATEGORY_IS_IVALID = "Category: invalid category";
+
     Counters.Counter private _itemIds;
     Counters.Counter private _itemsSold;
     Counters.Counter private _totalTokens;
     Counters.Counter public _totalCollection;
     Counters.Counter private _totalCollectionItems;
+    Counters.Counter private _totalCategory;
     // From ERC721 registry assetId to Order (to avoid asset collision)
     mapping(address => mapping(uint256 => Order)) public orderByAssetId;
 
@@ -99,7 +102,7 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
     mapping(uint256 => Token) public tokensSupport;
     mapping(address => Order[]) private _ordersByUsers;
     mapping(uint256 => Order) private _orders;
-
+    mapping(uint256 => Category) private _categories;
     mapping(uint256 => Collection) private _collections;
     mapping(uint256 => mapping(uint256 => CollectionItem))
         private _collectionsItems;
@@ -138,14 +141,16 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
         uint256 _assetId,
         uint256 _priceInWei,
         uint256 _expiresAt,
-        address _tokenContract
+        address _tokenContract,
+        uint256 _category
     ) public whenNotPaused {
         _createOrder(
             _nftAddress,
             _assetId,
             _priceInWei,
             _expiresAt,
-            _tokenContract
+            _tokenContract,
+            _category
         );
     }
 
@@ -519,6 +524,23 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
         return item;
     }
 
+    function createCategory(string memory name, string memory icon)
+        public
+        returns (uint256)
+    {
+        bytes memory nameBytes = bytes(name);
+        bytes memory iconBytes = bytes(icon);
+        require(nameBytes.length > 0, COLLECTION_NAME_EMPATY);
+        require(iconBytes.length > 0, COLLECTION_ICON_EMPATY);
+        _totalCategory.increment();
+        _categories[_totalCategory.current()] = Category({
+            id: _totalCategory.current(),
+            name: name,
+            icon: icon
+        });
+        return _totalCategory.current();
+    }
+
     function createCollection(string memory name, string memory icon)
         public
         returns (uint256)
@@ -563,12 +585,13 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
         uint256 _assetId,
         uint256 _priceInWei,
         uint256 _expiresAt,
-        address __tokenContract
+        address _tokenContract,
+        uint256 _category
     ) internal {
         // Check nft registry
         IERC721 nftRegistry = _requireERC721(_nftAddress);
 
-        IERC20Metadata token = IERC20Metadata(__tokenContract);
+        IERC20Metadata token = IERC20Metadata(_tokenContract);
         require(getSymbolIndex(token.symbol()) > 0, TOKEN_IS_IVALID);
 
         nftRegistered[_nftAddress] = nftRegistry;
@@ -610,7 +633,8 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
             price: _priceInWei,
             expiresAt: _expiresAt,
             _assetId: _assetId,
-            tokenContract: __tokenContract
+            tokenContract: _tokenContract,
+            category: _category
         });
 
         _itemIds.increment();
@@ -623,7 +647,8 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
             price: _priceInWei,
             expiresAt: _expiresAt,
             _assetId: _assetId,
-            tokenContract: __tokenContract
+            tokenContract: _tokenContract,
+            category: _category
         });
 
         emit OrderCreated(
@@ -633,7 +658,8 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
             _assetId,
             _priceInWei,
             _expiresAt,
-            __tokenContract
+            _tokenContract,
+            _category
         );
     }
 
@@ -783,7 +809,7 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
         }
     }
 
-    function getOrders() public view returns (Order[] memory) {
+    function listOrders() public view returns (Order[] memory) {
         uint256 itemCount = _itemIds.current();
         uint256 unsoldItemCount = _itemIds.current() - _itemsSold.current();
         uint256 currentIndex = 0;
@@ -797,6 +823,7 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
 
         return items;
     }
+
 
     function listTokens() public view returns (Token[] memory tokens) {
         uint256 totalItemCount = _totalTokens.current();
@@ -812,6 +839,41 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
         }
     }
 
+   function listOrdersByCategory(uint256 _id) public view returns (Order[] memory orders) {
+        uint256 totalItemCount = _itemIds.current();
+        uint256 totalItemCountlist = _itemIds.current();
+        uint256 itemCount = 0;
+        uint256 currentIndex = 0;
+
+        for (uint256 i = 0; i < totalItemCount; i++) {
+            if (_orders[i + 1].category == _id) {
+                itemCount += 1;
+            }
+        }
+
+        orders = new Order[](itemCount);
+        for (uint256 i = 0; i < totalItemCountlist; i++) {
+            if (_orders[i + 1].category ==  _id) {
+                uint256 currentId = i+1;
+                Order storage currentItem = _orders[currentId];
+                orders[currentIndex] = currentItem;
+                currentIndex += 1;
+            }
+        }
+    }
+
+    function listCategory() public view returns (Category[] memory categories) {
+        uint256 totalItemCount = _totalCategory.current();
+        uint256 currentIndex = 0;
+        categories = new Category[](totalItemCount);
+        for (uint256 i = 0; i < totalItemCount; i++) {
+            uint256 currentId = i + 1;
+            Category storage currentItem = _categories[currentId];
+            categories[currentIndex] = currentItem;
+            currentIndex += 1;
+        }
+    }
+
     function listCollections()
         public
         view
@@ -822,7 +884,7 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
         uint256 itemCount = 0;
         collections = new Collection[](totalItemCount);
         for (uint256 i = 0; i < totalItemCount; i++) {
-            uint256 currentId = 1;
+            uint256 currentId = i + 1;
             Collection storage currentItem = _collections[currentId];
             itemCount += 1;
             collections[currentIndex] = currentItem;
@@ -842,7 +904,7 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
         uint256 itemCount = 0;
         collections = new CollectionItem[](totalItemCount);
         for (uint256 i = 0; i < totalItemCount; i++) {
-            uint256 currentId = 1;
+            uint256 currentId = i + 1;
             CollectionItem memory currentItem = _collectionsItems[_id][
                 currentId
             ];
@@ -926,6 +988,8 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
         }
         return 0;
     }
+
+
 
     function stringsEqual(string storage _a, string memory _b)
         internal

@@ -15,6 +15,18 @@ contract('Marketplace', async (accounts) => {
   const tokenId3 = 2
   const tokenId4 = 3
 
+  it('create category', async () => {
+    marketplace = await Marketplace.deployed()
+    await marketplace.createCategory('zero', 'google.com', {
+      from: seller2,
+    })
+    await marketplace.createCategory('zero2', 'google.com', {
+      from: seller2,
+    })
+    const listCategory = await marketplace.listCategory.call()
+    assert.equal(listCategory.length, 2)
+  })
+
   it('add token', async () => {
     marketplace = await Marketplace.deployed()
 
@@ -67,6 +79,7 @@ contract('Marketplace', async (accounts) => {
       price,
       ts,
       BRz.address,
+      1,
       {
         from: seller,
       },
@@ -77,6 +90,7 @@ contract('Marketplace', async (accounts) => {
       price,
       ts,
       BRz.address,
+      2,
       {
         from: seller,
       },
@@ -97,6 +111,7 @@ contract('Marketplace', async (accounts) => {
       price,
       ts,
       BRz.address,
+      1,
       {
         from: seller2,
       },
@@ -104,13 +119,14 @@ contract('Marketplace', async (accounts) => {
   })
 
   it('lists orders', async () => {
-    const orders = await marketplace.getOrders.call()
+    let orders = await marketplace.listOrders.call()
     assert.equal(orders.length, 3)
   })
 
-  it('lists my orders', async () => {
+
+  it('lists orders', async () => {
     let marketplace = await Marketplace.deployed()
-    const orders = await marketplace.getMyOrders.call({
+    let orders = await marketplace.getMyOrders.call({
       from: seller2,
     })
     assert.equal(orders.length, 1)
@@ -150,6 +166,7 @@ contract('Marketplace', async (accounts) => {
         price,
         ts,
         '0x420412e765bfa6d85aaac94b4f7b708c89be2e2b',
+        2,
         {
           from: seller2,
         },
@@ -173,6 +190,7 @@ contract('Marketplace', async (accounts) => {
         price,
         ts,
         '0x420412e765bfa6d85aaac94b4f7b708c89be2e2b',
+        2,
         {
           from: seller2,
         },
@@ -197,6 +215,13 @@ contract('Marketplace', async (accounts) => {
     assert.equal(balance.valueOf(), 1)
   })
 
+
+  it('list orders categoryes', async () => {
+    let marketplace = await Marketplace.deployed()
+    let ordersCategory = await marketplace.listOrdersByCategory.call(2)
+    assert.equal(ordersCategory.length, 1)
+  })
+
   it('create bid order', async () => {
     let BRz = await Token.deployed()
     const price = web3.utils.toWei('0.5', 'ether')
@@ -212,6 +237,9 @@ contract('Marketplace', async (accounts) => {
     const bids = await marketplace.getBidByAssetIds.call(nftRef.address, lists)
     assert.equal(bids.length, 1)
   })
+
+
+
 
   it('create collection', async () => {
     let BRz = await Token.deployed()
@@ -237,4 +265,7 @@ contract('Marketplace', async (accounts) => {
     )
     assert.equal(listItens.length, 1)
   })
+
+
+
 })
