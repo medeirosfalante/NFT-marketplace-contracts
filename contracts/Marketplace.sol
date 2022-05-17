@@ -526,6 +526,7 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
 
     function createCategory(string memory name, string memory icon)
         public
+        onlyRole(MANAGER_ROLE)
         returns (uint256)
     {
         bytes memory nameBytes = bytes(name);
@@ -824,7 +825,6 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
         return items;
     }
 
-
     function listTokens() public view returns (Token[] memory tokens) {
         uint256 totalItemCount = _totalTokens.current();
         uint256 currentIndex = 0;
@@ -839,7 +839,11 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
         }
     }
 
-   function listOrdersByCategory(uint256 _id) public view returns (Order[] memory orders) {
+    function listOrdersByCategory(uint256 _id)
+        public
+        view
+        returns (Order[] memory orders)
+    {
         uint256 totalItemCount = _itemIds.current();
         uint256 totalItemCountlist = _itemIds.current();
         uint256 itemCount = 0;
@@ -853,8 +857,8 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
 
         orders = new Order[](itemCount);
         for (uint256 i = 0; i < totalItemCountlist; i++) {
-            if (_orders[i + 1].category ==  _id) {
-                uint256 currentId = i+1;
+            if (_orders[i + 1].category == _id) {
+                uint256 currentId = i + 1;
                 Order storage currentItem = _orders[currentId];
                 orders[currentIndex] = currentItem;
                 currentIndex += 1;
@@ -988,8 +992,6 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
         }
         return 0;
     }
-
-
 
     function stringsEqual(string storage _a, string memory _b)
         internal
