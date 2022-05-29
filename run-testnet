@@ -1,0 +1,26 @@
+let marketplace = await Marketplace.deployed()
+let BRz = await Token.deployed()
+let nftRef = await NFT.deployed()
+let ts = 297633586500000
+
+const price = web3.utils.toWei('10', 'ether')
+
+
+//  tokenID 1
+await nftRef.mint(accounts[0], 'https://game.example/item-id-8u5h2m.json')
+await nftRef.approve(marketplace.address, 1)
+await marketplace.createOrder( nftRef.address,1,price,ts,BRz.address,1)
+// tokenID 2
+await nftRef.mint(accounts[0], 'https://game.example/item-id-8u5h2m.json')
+await nftRef.approve(marketplace.address, 2)
+await marketplace.createOrder(nftRef.address,2,price,ts,BRz.address,1)
+// tokenID 3
+await nftRef.mint(accounts[0], 'https://game.example/item-id-8u5h2m.json')
+await nftRef.approve(marketplace.address, 3)
+await marketplace.createOrder(nftRef.address,3,price,ts,BRz.address,1)
+
+
+// create collection
+
+await marketplace.createCollection('TEST', 'google.com')
+await marketplace.addItemCollection(1,0)
