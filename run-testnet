@@ -6,18 +6,31 @@ let ts = 297633586500000
 const price = web3.utils.toWei('10', 'ether')
 
 
+await marketplace.createCategory('MetaEXP', 'google.com')
+await marketplace.createCategory('Enablers', 'google.com')
+
+// add token
+
+await marketplace.AddToken("0x49162994B6bb083B954CcAABEbab2BC3640dA9E9")
+
+
+//  tokenID 0
+await nftRef.mint(accounts[0], 'https://game.example/item-id-8u5h2m.json')
+await nftRef.approve(marketplace.address, 0)
+await marketplace.createOrder( nftRef.address,0,price,ts,"0x49162994B6bb083B954CcAABEbab2BC3640dA9E9",1)
+
 //  tokenID 1
 await nftRef.mint(accounts[0], 'https://game.example/item-id-8u5h2m.json')
 await nftRef.approve(marketplace.address, 1)
-await marketplace.createOrder( nftRef.address,1,price,ts,BRz.address,1)
+await marketplace.createOrder( nftRef.address,1,price,ts,"0x49162994B6bb083B954CcAABEbab2BC3640dA9E9",1)
 // tokenID 2
 await nftRef.mint(accounts[0], 'https://game.example/item-id-8u5h2m.json')
 await nftRef.approve(marketplace.address, 2)
-await marketplace.createOrder(nftRef.address,2,price,ts,BRz.address,1)
+await marketplace.createOrder(nftRef.address,2,price,ts,"0x49162994B6bb083B954CcAABEbab2BC3640dA9E9",1)
 // tokenID 3
 await nftRef.mint(accounts[0], 'https://game.example/item-id-8u5h2m.json')
 await nftRef.approve(marketplace.address, 3)
-await marketplace.createOrder(nftRef.address,3,price,ts,BRz.address,1)
+await marketplace.createOrder(nftRef.address,3,price,ts,"0x49162994B6bb083B954CcAABEbab2BC3640dA9E9",1)
 
 
 // create collection

@@ -29,6 +29,15 @@ module.exports = {
       timeoutBlocks: 200,
       skipDryRun: true,
     },
+    coinex_testnet: {
+      provider: () =>
+        new HDWalletProvider(mnemonic, `https://testnet-rpc.coinex.net`),
+      network_id: 53,
+      confirmations: 2,
+      timeoutBlocks: 2000,
+      skipDryRun: true,
+      networkCheckTimeout: 1000000,
+    },
   },
 
   // Set default mocha options here, use special reporters etc.
