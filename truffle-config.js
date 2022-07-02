@@ -13,9 +13,9 @@ module.exports = {
       provider: () =>
         new HDWalletProvider(
           mnemonic,
-          `https://data-seed-prebsc-1-s1.binance.org:8545`,
+          `https://kovan.infura.io/v3/7acbbbc5256a47f380e3037922853170`,
         ),
-      network_id: 97,
+      network_id: 42,
       confirmations: 2,
       timeoutBlocks: 2000,
       skipDryRun: true,

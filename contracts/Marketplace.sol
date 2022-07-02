@@ -350,7 +350,7 @@ contract Marketplace is Pausable, FeeManager, IMarketplace, AccessControl {
      * @param _priceInWei - Bid price in acceptedToken currency
      * @param _expiresAt - Bid expiration time
      */
-    function PlaceBid(
+    function PlaceBid(_
         address _nftAddress,
         uint256 _assetId,
         uint256 _priceInWei,
